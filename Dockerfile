@@ -27,6 +27,6 @@ CMD [ "-m" ]
 VOLUME /myvol
 VOLUME /peter
 USER peter
-USER eric
+
 WORKDIR /root/my-test
 
