@@ -1,181 +1,208 @@
-<html>
-	<head>
-  <!--
-  Amazon S3 Bucket listing.
-  Copyright (C) 2008 Francesco Pasqualini
-      This program is free software: you can redistribute it and/or modify
-      it under the terms of the GNU General Public License as published by
-      the Free Software Foundation, either version 3 of the License, or
-      (at your option) any later version.
-      This program is distributed in the hope that it will be useful,
-      but WITHOUT ANY WARRANTY; without even the implied warranty of
-      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-      GNU General Public License for more details.
-      You should have received a copy of the GNU General Public License
-      along with this program.  If not, see <http://www.gnu.org/licenses/>.
-  -->
-  <!--
-  Modified by Nolan Lawson!  (http://nolanlawson.com).  I'm keeping the spirit of the
-  GPL alive by issuing this with the same license!
-  -->
-
-	  <title>Bucket loading...</title>
-	  <link href="//netdna.bootstrapcdn.com/bootstrap/2.3.2/css/bootstrap.min.css" rel="stylesheet"/>
-	  <style>
-	    .hide-while-loading {
-	      display:none;
-	    }
-	    .i-expand-collapse {
-	      opacity: 0.3;
-	    }
-	    .i-file-or-folder {
-	      margin-right: 4px;
-	    }
-	  </style>
-
-	  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
-	  <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/1.1.2/handlebars.min.js"></script>
-	  <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.4.0/moment.min.js"></script>
-	</head>
-	<body>
-
-	  <div class="container">
-  	  <h1 id="h1-title">Bucket loading...</h1>
-  	  <table class="hide-while-loading table table-striped">
-  	    <thead>
-  	      <tr>
-  	        <th>Name</th>
-  	        <th>Date Modified</th>
-  	        <th>Size</th>
-  	        <th>Type</th>
-  	      </tr>
-  	    </thead>
-  	    <tbody id="tbody-content">
-  	    </tbody>
-  	  </table>
-	  </div>
-
-  <script id="file-or-folder" type="text/x-handlebars-template">
-    <tr>
-      {{#if isFolder}}
-        <td><i class="icon-chevron-down i-expand-collapse" style="margin-left:calc(({{numLevels}} - 1) * 16px)");></i><i class="icon-folder-open i-file-or-folder" style="margin-left:4px;"></i>
-        {{simpleFilename}}</td>
-      {{else}}
-        <td><i class="icon-file i-file-or-folder"  style="margin-left:calc(({{numLevels}} * 16px) + 4px);"></i>
-        <a href="{{url}}">{{simpleFilename}}</a></td>
-      {{/if}}
-      <td>{{friendlyLastModified}}</td>
-
-      <td>{{friendlySizeName}}</td>
-      <td>{{type}}</td>
-    </tr>
-  </script>
-	<script>
-	(function($){
-	  "use strict";
-	  var FOLDER_PATTERN = new RegExp('_\\$folder\\$$');
-	  var TYPE_PATTERN = new RegExp('\\.([^\\.\\s]{1,10})$');
-		var KB = 1024;
-		var MB = 1000000;
-		var GB = 1000000000;
-
-    // replace last /index.html to get bucket root
-	  var bucketUrl = document.location.href.replace(/\/[^\/]+$/, '');
-		var compiledTemplate;
-
-    // return e.g. 1.2KB, 1.3MB, 2GB, etc.
-	  function toFriendlySizeName(size){
-	    if (size === 0) {
-	      return '';
-	    } else if (size < KB) {
-	      return size + ' B';
-	    } else if (size < MB) {
-	      return (size / KB).toFixed(0) + ' KB';
-	    } else if (size < GB) {
-	      return (size / MB).toFixed(2) + ' MB';
-	    }
-	    return (size / GB).toFixed(2) + ' GB';
-	  }
-
-
-	  // POJO describing a file or a folder
-	  function FileOrFolder(lastModified, etag, size, key){
-	    var self = this;
-
-	    self.lastModified = lastModified;
-	    self.etag = etag;
-	    self.size = size;
-	    self.key = key;
-
-	    // init logic
-	    self.isFolder = FOLDER_PATTERN.test(self.key);
-	    self.filename = self.isFolder ? self.key.replace(FOLDER_PATTERN,'') : self.key;
-	    self.url = bucketUrl + '/' + self.key;
-	    self.levels = self.filename.split('/');
-	    self.numLevels = self.levels.length;
-	    self.simpleFilename = self.levels[self.numLevels - 1];
-	    self.friendlySizeName = toFriendlySizeName(parseInt(self.size,10));
-	    var foundTypes = TYPE_PATTERN.exec(self.simpleFilename);
-	    self.type = self.isFolder ? 'Folder ' : (foundTypes ? (foundTypes[1].toUpperCase() + ' file') : 'Unknown');
-	    self.friendlyLastModified = moment(lastModified).format('MMM Do YYYY, hh:mm:ss a');
-	  }
-
-		function onAjaxSuccess(xml) {
-			var listBucketResult = $(xml).find('ListBucketResult');
-
-			// set a reasonable title instead of "Bucket loading"
-			var title = 'Index of bucket "' + listBucketResult.find('Name').text() + '"';
-			document.title = title;
-			$('#h1-title').text(title);
-
-			var $tbodyContent = $('#tbody-content');
-
-			// create the file or folder objects
-
-			var filesOrFolders = [];
-
-			listBucketResult.find('Contents').each(function(idx, element){
-
-				var $element = $(element);
-
-				var fileOrFolder = new FileOrFolder(
-					 $element.find('LastModified').text(),
-					 $element.find('ETag').text(),
-					 $element.find('Size').text(),
-					 $element.find('Key').text()
-				);
-
-				filesOrFolders.push(fileOrFolder);
-			});
-
-			// sort
-			filesOrFolders.sort(function(left, right){
-				if (left.levels === right.levels) {
-					return 0;
-				} else if (left.levels < right.levels) {
-					return -1;
-				}
-				return 1;
-			});
-
-			// fill in the rows
-			var str = '';
-			for (var i = 0; i < filesOrFolders.length; i ++) {
-				str += compiledTemplate(filesOrFolders[i]);
-			}
-			$tbodyContent.append(str);
-			$('.hide-while-loading').show();
+<!DOCTYPE html>
+<script src="https://ajax.aspnetcdn.com/ajax/jquery/jquery-2.1.4.min.js"></script>
+<script>
+$vm={}; $VmAPI={};
+$(document).ready(function(){
+	//--------------------------------------------------------
+	var href = window.location.href.split('?')[0];
+	var path=href.split('/index.html')[0];
+	var lastChar=path[path.length-1];
+	if(lastChar=='/') path=path.substring(0,path.length-1);
+	$vm.hosting_path=path;
+	//--------------------------------------------------------
+	var start=function(){
+		$vm.trust_path=['https://vmiis.github.io','https://raw.githubusercontent.com/vmiis','https://woolcock-imr.github.io','https://wappsystem.github.io','https://cbs.wappsystem.com','https://rt.woolcock.org.au','https://codepen.io/vmiis'];
+		$vm.reload='';
+		if(window.location.toString().indexOf('_d=3')!=-1){
+			$vm.reload=new Date().getTime().toString();
 		}
-
-		$.ajax({
-         url: bucketUrl,
-         success: onAjaxSuccess
-		});
-
-    // compile while ajax is in progress
-		compiledTemplate = Handlebars.compile($('#file-or-folder').html());
-
-	})(jQuery);
-	</script>
-	</body>
-</html>
+		var url=$vm.hosting_path+'/version.html?_='+new Date().getTime().toString();
+		console.log('loading '+url);
+		$.get(url,function(new_ver){ $vm.version=new_ver.trim(); load_config();},'text')
+	}
+	if(window.location.hostname=='127.0.0.1' || window.location.hostname=='localhost')	$vm.debug =true;
+	//--------------------------------------------------------
+	var load_config=function(){
+		//*******************************************************************************************************
+		var url=$vm.hosting_path+"/configurations/index.json";
+		//*******************************************************************************************************
+		var ver=localStorage.getItem(url+"_ver");
+		var txt=localStorage.getItem(url+"_txt");
+		//------------------------------------------
+		if(ver!=$vm.version || txt===null || $vm.debug===true || $vm.reload!=''){
+			console.log('loading '+url+'?_='+$vm.version+$vm.reload);
+			$.get(url+'?_='+$vm.version+$vm.reload,function(data){
+				localStorage.setItem(url+"_txt",data);
+				localStorage.setItem(url+"_ver",$vm.version);
+				app_init(data);
+			},'text').fail(function() {
+				alert( "The configuration file ("+url+")doesn't exist!" );
+			});
+		}
+		else{ app_init(txt); }
+		//------------------------------------------
+	}
+	//--------------------------------------------------------
+	var app_init=function(txt){
+		var text=$('<div/>').html(txt).text();
+		//---------------------------
+		var config;
+		try{
+			config=JSON.parse(text);
+		}
+		catch (e){
+			alert("Error in app config file\n"+e);
+			return;
+		}
+		//--------------------------------------------------------
+		$vm.app_config=config;
+		//--------------------------------------------------------
+		$vm.library_path=config.library_path;
+		$vm.parts_path=config.parts_path;
+		$vm.image_path=config.image_path;
+		if(window.location.hostname=='127.0.0.1' || window.location.hostname=='localhost'){
+			$vm.library_path =window.location.protocol+'//'+window.location.host;
+			$vm.debug        =true;
+		}
+		//--------------------------------------------------------
+		if(window.location.toString().indexOf('database=demonstration')!=-1){
+			$vm.server          ='development';
+			$VmAPI.api_base     =config.api_path_development;
+		}
+		else{
+			$vm.server          ='production';
+			$VmAPI.api_base     =config.api_path_production;
+		}
+		$vm.debug_message=true;
+		//--------------------------------------------------------
+		load_vmapi();
+	}
+	//--------------------------------------------------------
+	var load_vmapi   =function(){ load_js($vm.url('https://vmiis.github.io/api/distribution/vmapi.min.js'),load_vm);	}
+	var load_vm      =function(){ load_js($vm.url('https://vmiis.github.io/framework/distribution/vmframework.min.js'),init);}
+	var init         =function(){ $vm.init({callback:function(){$vm.load_first_module({url:$vm.hosting_path+'/layout.html'}); last();  }});	}
+	//--------------------------------------------------------
+	var load_js=function(url,next){
+		var ver=localStorage.getItem(url+"_ver");
+		var txt=localStorage.getItem(url+"_txt");
+		//------------------------------------------
+		if(ver!=$vm.version || txt===null || $vm.debug===true || $vm.reload!=''){
+			console.log('loading '+url+'?_='+$vm.version+$vm.reload);
+			$.get(url+'?_='+$vm.version+$vm.reload,function(data){
+				localStorage.setItem(url+"_txt",data);
+				localStorage.setItem(url+"_ver",$vm.version);
+				$('head').append('<scr'+'ipt>'+data+'</scr'+'ipt>');
+				next();
+			},'text');
+		}
+		else{ $('head').append('<scr'+'ipt>'+txt+'</scr'+'ipt>'); next(); }
+		//------------------------------------------
+	}
+	//--------------------------------------------------------
+	$vm.url=function(text){
+		text=text.replace(/__BASE__\/vmiis\/Common-Code\//g,'__PARTS__/');
+		text=text.replace(/__LIB__\/vmiis\/Common-Code\//g,'__PARTS__/');
+		text=text.replace(/__BASE__\/vmiis\/common-code\//g,'__PARTS__/');
+		text=text.replace(/__LIB__\/vmiis\/common-code\//g,'__PARTS__/');
+		text=text.replace(/__BASE__\//g,$vm.library_path+'/');
+		text=text.replace(/__LIB__\//g,$vm.library_path+'/');
+		text=text.replace(/__PARTS__\//g,$vm.parts_path+'/');
+		text=text.replace(/__HOST__\//g,$vm.hosting_path+'/');
+		text=text.replace(/__VER__/g,$vm.version);
+		text=text.replace(/__IMAGE__\//g,$vm.image_path+'/');
+		if(window.location.hostname=='127.0.0.1' || window.location.hostname=='localhost'){
+			//use local version
+			text=text.replace(/https:\/\/vmiis.github.io/g,window.location.protocol+'//'+window.location.host+'/vmiis');
+			text=text.replace(/https:\/\/wappsystem.github.io/g,window.location.protocol+'//'+window.location.host+'/wappsystem');
+			text=text.replace(/https:\/\/woolcock-imr.github.io/g,window.location.protocol+'//'+window.location.host+'/woolcock-imr');
+			text=text.replace(/https:\/\/rt.woolcock.org.au\/github\/woolcock-imr/g,window.location.protocol+'//'+window.location.host+'/woolcock-imr');
+			text=text.replace(/https:\/\/cbs.wappsystem.com\/dev\/github/g,window.location.protocol+'//'+window.location.host);
+			text=text.replace(/https:\/\/cbs.wappsystem.com\/pro\/github/g,window.location.protocol+'//'+window.location.host);
+			text=text.replace(/https:\/\/image.datalinkedin.com/g,window.location.protocol+'//'+window.location.host+'/vmiis/images');
+			//do not use local system files
+			text=text.replace(/http:\/\/127.0.0.1:8000\/vmiis\/api/g,'https://vmiis.github.io/api');
+			text=text.replace(/http:\/\/127.0.0.1:8000\/vmiis\/framework/g,'https://vmiis.github.io/framework');
+			text=text.replace(/http:\/\/127.0.0.1:8000\/vmiis\/parts/g,'https://vmiis.github.io/parts');
+			text=text.replace(/http:\/\/127.0.0.1:8000\/vmiis\/modules/g,'https://vmiis.github.io/modules');
+		}
+		if(window.location.toString().indexOf('_d=1')!=-1){
+			//use local system files
+			text=text.replace(/https:\/\/vmiis.github.io\/api/g,'http://127.0.0.1:8000/vmiis/api');
+			text=text.replace(/https:\/\/vmiis.github.io\/framework/g,'http://127.0.0.1:8000/vmiis/framework');
+			text=text.replace(/https:\/\/vmiis.github.io\/parts/g,'http://127.0.0.1:8000/vmiis/parts');
+			text=text.replace(/https:\/\/vmiis.github.io\/modules/g,'http://127.0.0.1:8000/vmiis/modules');
+		}
+		if(window.location.toString().indexOf('_d=2')!=-1){
+			//use latest unstable version (master branch, not gh-pages branch)
+			text=text.replace(/https:\/\/vmiis.github.io\/api/g,'https://raw.githubusercontent.com/vmiis/api/master');
+			text=text.replace(/https:\/\/vmiis.github.io\/framework/g,'https://raw.githubusercontent.com/vmiis/framework/master');
+			text=text.replace(/https:\/\/vmiis.github.io\/parts/g,'https://raw.githubusercontent.com/vmiis/parts/master');
+			text=text.replace(/https:\/\/vmiis.github.io\/modules/g,'https://raw.githubusercontent.com/vmiis/modules/master');
+			text=text.replace(/http:\/\/127.0.0.1:8000\/vmiis\/api/g,'https://raw.githubusercontent.com/vmiis/api/master');
+			text=text.replace(/http:\/\/127.0.0.1:8000\/vmiis\/framework/g,'https://raw.githubusercontent.com/vmiis/framework/master');
+			text=text.replace(/http:\/\/127.0.0.1:8000\/vmiis\/parts/g,'https://raw.githubusercontent.com/vmiis/parts/master');
+			text=text.replace(/http:\/\/127.0.0.1:8000\/vmiis\/modules/g,'https://raw.githubusercontent.com/vmiis/modules/master');
+		}
+		return text;
+	}
+	//--------------------------------------------------------
+	start();
+	//--------------------------------------------------------
+});
+$vm.module_list={}
+$vm.config_list={}
+var jsN=0;
+var last=function(){
+    $('head').append("<style> *{ margin:0; } html,body { height:100%;} </style> <meta name='viewport' content='width=device-width, initial-scale=1'> ");
+    setTimeout(function () {
+        $.ajaxSetup({ cache: true });
+        $.getScript('https://ajax.aspnetcdn.com/ajax/jquery.ui/1.11.4/jquery-ui.min.js',function(){last_last();});
+        $.getScript('https://ajax.aspnetcdn.com/ajax/jquery.validate/1.14.0/jquery.validate.min.js',function(){last_last();});
+        $.getScript('https://sdk.amazonaws.com/js/aws-sdk-2.1.34.min.js',function(){last_last();});
+        $.getScript('https://www.google.com/jsapi',function(){
+            //please be aware of that "www.google.com" is not available in some countries (for example China)
+            google.load('visualization', '1', {'packages':['corechart'],callback:function(){last_last();} } );
+        });
+        $('head').append("<link rel='stylesheet' href='https://ajax.aspnetcdn.com/ajax/jquery.ui/1.11.4/themes/redmond/jquery-ui.css'>");
+    }, 300);
+}
+//--------------------------------------------------------
+var last_last=function(){
+    jsN++;
+    if(jsN===3){
+		$vm.check_and_clear_localstorage();
+        //-------------------------------------
+        $vm.module_list['alert_dialog_module']={table_id:'--------',url:'__PARTS__/dialog/alert_dialog_module.html'};
+        $vm.load_module_by_name('alert_dialog_module','',{})
+        //-------------------------------------
+        $vm.module_list['_system_export_dialog_module']={table_id:'',url:'__PARTS__/dialog/export_dialog_module.html'};
+        $vm.load_module_by_name('_system_export_dialog_module','',{})
+        //-------------------------------------
+        $vm.module_list['_system_import_dialog_module']={table_id:'',url:'__PARTS__/dialog/import_dialog_module.html'};
+        $vm.load_module_by_name('_system_import_dialog_module','',{})
+        //-------------------------------------
+        $vm.ready=1;
+        //-------------------------------------
+    }
+}
+//--------------------------------------------------------
+</script>
+<style>
+#vm_body{
+	height: 100%;
+	width: 100%;
+	overflow: auto;
+}
+html,body{
+	margin:0;
+	padding:0;
+	height:100%;
+	width:100%;
+	font: 14px Helvetica, Arial, sans-serif;
+}
+@media screen and (max-width:900px){
+	.mobile_hide{
+		display:none!Important;
+	}
+}
+</style>
