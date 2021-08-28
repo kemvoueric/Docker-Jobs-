@@ -7,8 +7,8 @@ RUN apt install vim wget   curl -y
 RUN mkdir /root/my-test
 RUN mkdir /root/my-test1
 RUN apt-get update 
-RUN apt-get install –y apache2 
-RUN apt-get install –y apache2-utils 
+RUN apt  install  apache2 -y
+RUN apt install apache2-utils -y
 RUN apt-get clean 
 LABEL "cameroon"="yaounde"
 LABEL "gabon"="libreville"
