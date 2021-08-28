@@ -25,7 +25,8 @@ ENV PASSWORD="YWJjMTIzCg=="
 ADD ./*   /root/my-test/ 
 ADD  https://github.com/kemvoueric/sonar-scanner-cli/archive/refs/tags/4.6.2.2472.tar.gz    /root/my-test   
 COPY ./*  /root/my-test1/ 
-COPY ./index.html /var/www/html
+COPY ./index.html /usr/local/apache2/htdocs/
+
 VOLUME /myvol
 VOLUME /peter
 
