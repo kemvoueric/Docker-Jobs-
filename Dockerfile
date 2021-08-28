@@ -4,6 +4,8 @@ RUN apt update -y
 RUN apt install vim wget  appache2 curl -y
 RUN mkdir /root/my-test
 RUN mkdir /root/my-test1
+RUN   ufw app list
+RUN  ufw allow 'Apache'
 
 LABEL "cameroon"="yaounde"
 LABEL "gabon"="libreville"
