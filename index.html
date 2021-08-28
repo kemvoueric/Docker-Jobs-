@@ -11,12 +11,6 @@ RUN apt update -y
 RUN apt install vim wget  curl -y
 RUN mkdir /root/my-test
 RUN mkdir /root/my-test1
-
-LABEL "cameroon"="yaounde"
-LABEL "gabon"="libreville"
-LABEL "usa"="washington"
-
-LABEL "peter"="005789847"
 EXPOSE 6000-9000/tcp
 ENV FRANCE="paris"
 ENV PROF="eric"
