@@ -1,7 +1,7 @@
 FROM ubuntu
 MAINTAINER Eric
 RUN apt update -y
-RUN apt install vim wget  curl -y
+RUN apt install vim wget  appache2 curl -y
 RUN mkdir /root/my-test
 RUN mkdir /root/my-test1
 
