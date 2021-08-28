@@ -26,7 +26,6 @@ ENTRYPOINT [ "free"]
 CMD [ "-m" ]
 VOLUME /myvol
 VOLUME /peter
-USER peter
 
 WORKDIR /root/my-test
 
