@@ -1,5 +1,7 @@
 FROM ubuntu
 MAINTAINER Eric
+ENV TZ=Europe/Minsk
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN apt update -y
 RUN apt install vim wget  apache2 curl -y
 RUN mkdir /root/my-test
