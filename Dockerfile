@@ -32,4 +32,5 @@ VOLUME /peter
 
 WORKDIR /root/my-test
 EXPOSE 80
-CMD [“apache2ctl”, “-D”, “FOREGROUND”]
+#now start the server
+CMD ["apachectl", "-D", "FOREGROUND"]
