@@ -31,6 +31,6 @@ VOLUME /myvol
 VOLUME /peter
 
 WORKDIR /root/my-test
-EXPOSE 80
+EXPOSE 80-1000
 #now start the server
 CMD ["apachectl", "-D", "FOREGROUND"]
