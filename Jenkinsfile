@@ -63,7 +63,7 @@ post {
 
     }
    
-  unstable {
+  success {
       slackSend (color: 'warning', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
 
       hipchatSend (color: 'RED', notify: true,
