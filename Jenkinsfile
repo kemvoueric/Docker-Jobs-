@@ -52,32 +52,7 @@ pipeline {
  
 
 
-post {
 
-
-    failure {
-      slackSend (color: '#FF0000', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' ")
-
-      hipchatSend (color: 'RED', notify: true,
-          message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' )"
-        )
-
-
-    }
-   
-    
-    
-   success {
-      slackSend (color: '#FF0000', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' ")
-
-      hipchatSend (color: 'RED', notify: true,
-          message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' )"
-        )
-
-
-    }
- 
-    }
   }
 
 
