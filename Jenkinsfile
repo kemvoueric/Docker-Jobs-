@@ -26,7 +26,7 @@ pipeline {
 
         stage('pushing images to Dockerhub') {
             steps {
-             sh 'sudo docker push linux2021/geradine1:${BUILD_NUMBER} .'
+             sh 'sudo docker push linux2021/geradine1:${BUILD_NUMBER}'
             }
         }
 
