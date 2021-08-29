@@ -2,23 +2,16 @@ pipeline {
     agent any
 
     stages {
-        stage('Hello') {
+        stage('cleaning environment') {
             steps {
-                echo 'Hello World'
+                A=$(sudo docker images -aq)
+                sudo docker rm -f $(sudo docker ps -aq)
+                sudo docker rmi -f $A || true 
+
             }
         }
     }
-
-
-
-
-
-
-
-
-
-
-
+}
 
 
 
