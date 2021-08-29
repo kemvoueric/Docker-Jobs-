@@ -24,8 +24,20 @@ pipeline {
 
 
 
+        stage('pushing images to Dockerhub') {
+            steps {
+             sh 'sudo docker push linux2021/geradine1:${BUILD_NUMBER} .'
+            }
+        }
 
 
+        stage('pushing images to Nexus') {
+            steps {
+             sudo docker tag linux2021/geradine1:${BUILD_NUMBER}  18.236.91.148:8085/linux2021/geradine1:${BUILD_NUMBER}
+            sudo docker login 54-185-222-32:8085  -u admin -p abc123
+             sudo docker push 54-185-222-32:8085/linux2021/geradine1:${BUILD_NUMBER}
+            }
+        }
 
 
 }
