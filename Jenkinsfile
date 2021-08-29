@@ -39,6 +39,13 @@ pipeline {
             }
         }
 
+        
+        
+        stage('running container') {
+            steps {
+             sh 'sudo docker run -itd  -p 4500:80 --name eric linux2021/geradine1:${BUILD_NUMBER}'
+            }
+        }
 
 }
  
