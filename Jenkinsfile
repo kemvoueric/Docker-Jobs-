@@ -33,7 +33,7 @@ pipeline {
 
         stage('pushing images to Nexus') {
             steps {
-            sh 'sudo docker tag linux2021/geradine1:${BUILD_NUMBER}  18.236.91.148:8085/linux2021/geradine1:${BUILD_NUMBER}'
+            sh 'sudo docker tag linux2021/geradine1:${BUILD_NUMBER}  54.185.222.32:8085/linux2021/geradine1:${BUILD_NUMBER}'
             sh 'sudo docker login 54.185.222.32:8085  -u admin -p abc123'
              sh 'sudo docker push 54.185.222.32:8085/linux2021/geradine1:${BUILD_NUMBER}'
             }
