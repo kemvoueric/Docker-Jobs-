@@ -5,7 +5,7 @@ pipeline {
         stage('cleaning environment') {
             steps {
              
-             sh  free -m 
+             sh 'lsblk'
            
 
             }
