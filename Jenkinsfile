@@ -10,7 +10,17 @@ pipeline {
 
             }
         }
-    }
+
+        stage('build docker images') {
+            steps {
+             sh 'sudo docker build -t linux2021/geradine1:${BUILD_NUMBER} .'
+             sh 'sudo docker login -u linux2021 -p Police1998'
+
+
+            }
+
+        }
+    
 
 
 
@@ -19,3 +29,4 @@ pipeline {
 
 
 }
+ 
