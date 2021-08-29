@@ -39,14 +39,42 @@ pipeline {
             }
         }
 
-        
-        
-        stage('running container') {
+
+    stage('running container') {
             steps {
              sh 'sudo docker run -itd  -p 4500:80 --name eric linux2021/geradine1:${BUILD_NUMBER}'
             }
         }
 
+
+
 }
  
+
+
+post {
+
+
+    failure {
+      slackSend (color: '#FF0000', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+
+      hipchatSend (color: 'RED', notify: true,
+          message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})"
+        )
+
+
+    }
+   
+  success {
+      slackSend (color: 'warning', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+
+      hipchatSend (color: 'RED', notify: true,
+          message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})"
+        )
+
+
+    }
+  }
+
+
 }
