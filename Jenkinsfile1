@@ -1,7 +1,7 @@
 pipeline {
     agent any
      parameters {
-        string(defaultValue: "main", description: 'supply the branch for the docker image', name: 'IMAGE')
+        string(defaultValue: "", description: 'supply the branch for the docker image', name: 'IMAGE')
     }
 
     stages {
