@@ -1,0 +1,19 @@
+pipeline {
+    agent any
+     parameters {
+        string(defaultValue: "main", description: 'supply the branch for the docker image', name: 'IMAGE')
+    }
+
+    stages {
+        stage('Hello') {
+            steps {
+                echo 'Hello World'
+            }
+        }
+    }
+
+
+
+
+
+}
