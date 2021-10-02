@@ -1,58 +1,116 @@
 pipeline {
     agent any
+     parameters {
+
+
+           choice(name: 'team', choices: ['devops', 'developer', 'tester'], description: 'Select your team')
+           string(defaultValue: "", description: 'Enter your last_name', name: 'name')
+           choice(name: 'app', choices: ['client', 'api', 'db'], description: 'Select an app')
+           choice(name: 'registry', choices: ['nexus', 'dockerhub', 'both'], description: 'Select a registry')
+           string(defaultValue: "", description: 'supply a github repository', name: 'github')
+           string(defaultValue: "", description: 'supply the branch for the docker image', name: 'branch')
+           choice(name: 'repository', choices: ['klm', 'jnlp'], description: 'Select a repository')
+           string(defaultValue: "", description: 'supply a tag ', name: 'tag')
+           
+    }
 
     stages {
-        stage('cleaning environment') {
+        stage('clone') {
             steps {
-             sh   'A=$(sudo docker images -aq)'
-             sh  'sudo docker rm -f $(sudo docker ps -aq) || true'
-             sh  'sudo docker rmi -f $A || true' 
-
+                sh '''
+                rm -rf ./*
+                git clone -b $branch  $github
+               
+                '''
             }
         }
 
-        stage('build docker images') {
+
+        stage('validate dockerfile') {
             steps {
-             sh 'sudo docker build -t linux2021/geradine1:${BUILD_NUMBER} .'
-             sh 'sudo docker login -u linux2021 -p Police1998'
-
-
+                sh '''
+                A=$(ls)
+               cat $A/Dockerfile
+                '''
             }
+        }
 
+         stage('Build') {
+            steps {
+                sh '''
+                A=$(ls)
+               cat $A/Dockerfile
+                cd $A
+               sudo  docker rmi -f ${team}_${name}_${app}_${repository}:${tag} || true 
+               sudo docker build -t ${team}_${name}_${app}_${repository}:${tag} .
+               echo $team
+               echo $name
+              echo  $app
+              echo  $repository
+              echo $tag
+
+                '''
+            }
+        }
+
+
+
+    stage('push') {
+            steps {
+                sh '''
+              
+
+                '''
+            }
         }
     
 
-
-
-        stage('pushing images to Dockerhub') {
+    
+         stage ('dockerhub') {
+            when {
+              
+                expression { params.registry == 'dockerhub' }
+            }
             steps {
-             sh 'sudo docker push linux2021/geradine1:${BUILD_NUMBER}'
+                sh '''
+                 echo dockerhub
+                '''
             }
         }
 
+           
 
-        stage('pushing images to Nexus') {
+            stage ('nexus') {
+            when {
+               
+                expression { params.registry == 'nexus' }
+            }
             steps {
-            sh 'sudo docker tag linux2021/geradine1:${BUILD_NUMBER}  54.185.222.32:8085/linux2021/geradine1:${BUILD_NUMBER}'
-            sh 'sudo docker login 54.185.222.32:8085  -u admin -p abc123'
-             sh 'sudo docker push 54.185.222.32:8085/linux2021/geradine1:${BUILD_NUMBER}'
+                sh '''
+                  sudo docker login 34.213.92.53:5000 -u admin -p abc123
+                  sudo docker tag ${team}_${name}_${app}_${repository}:${tag}  34.213.92.53:5000/${team}_${name}_${app}_${repository}:${tag}
+                  sudo docker push 34.213.92.53:5000/${team}_${name}_${app}_${repository}:${tag}
+                '''
             }
         }
 
-
-    stage('running container') {
+          stage ('both') {
+            when {
+                
+                expression { params.registry == 'both' }
+            }
             steps {
-             sh 'sudo docker run -itd  -p 4500:80 --name eric linux2021/geradine1:${BUILD_NUMBER}'
+                sh '''
+                echo both
+                '''
             }
         }
+
+    }
+
+
 
 
 
 }
- 
-
-
-
-  }
-
 
