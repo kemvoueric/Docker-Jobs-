@@ -73,7 +73,9 @@ pipeline {
             }
             steps {
                 sh '''
-                 echo dockerhub
+                   sudo docker login  --username devopseasylearning2021 -p  DevOps2021@
+                  sudo docker tag ${team}_${name}_${app}_${repository}:${tag}  devopseasylearning2021/${team}_${name}_${app}_${repository}:${tag}
+                  sudo docker push devopseasylearning2021/${team}_${name}_${app}_${repository}:${tag}
                 '''
             }
         }
@@ -87,7 +89,7 @@ pipeline {
             }
             steps {
                 sh '''
-                  sudo docker login 34.213.92.53:5000 -u admin -p abc123
+                  cat /var/lib/jenkins/.nexus | sudo docker login 34.213.92.53:5000 --username admin --password-stdin
                   sudo docker tag ${team}_${name}_${app}_${repository}:${tag}  34.213.92.53:5000/${team}_${name}_${app}_${repository}:${tag}
                   sudo docker push 34.213.92.53:5000/${team}_${name}_${app}_${repository}:${tag}
                 '''
@@ -101,7 +103,14 @@ pipeline {
             }
             steps {
                 sh '''
-                echo both
+                   sudo docker login  --username devopseasylearning2021 -p  DevOps2021@
+                 
+                  sudo docker tag ${team}_${name}_${app}_${repository}:${tag}  devopseasylearning2021/${team}_${name}_${app}_${repository}:${tag}
+                  sudo docker push devopseasylearning2021/${team}_${name}_${app}_${repository}:${tag}
+
+                  cat /var/lib/jenkins/.nexus | sudo docker login 34.213.92.53:5000 --username admin --password-stdin
+                  sudo docker tag ${team}_${name}_${app}_${repository}:${tag}  34.213.92.53:5000/${team}_${name}_${app}_${repository}:${tag}
+                  sudo docker push 34.213.92.53:5000/${team}_${name}_${app}_${repository}:${tag}
                 '''
             }
         }
@@ -109,7 +118,25 @@ pipeline {
     }
 
 
+ post {
 
+success{
+  slackSend (channel: '#general', color: 'good', message: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+}
+
+failure{
+slackSend (channel: '#general', color: '#FF9FA1', message: "FAILURE: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+
+}
+
+
+unstable{
+slackSend (channel: '#general', color: 'warning', message: "UNSTABLE : Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+
+}
+
+
+ }
 
 
 }
